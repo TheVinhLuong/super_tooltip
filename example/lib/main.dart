@@ -84,6 +84,7 @@ class _TargetWidgetState extends State<TargetWidget> {
       arrowLength: 8,
       borderColor: Colors.transparent,
       borderWidth: 5,
+//      left: 0,
       backgroundColor: Color(0xFF2F6BFF),
       outsideBackgroundColor: Colors.transparent,
       hasShadow: false,

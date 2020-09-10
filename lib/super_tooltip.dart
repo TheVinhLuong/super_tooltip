@@ -520,7 +520,10 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       //
       case TooltipDirection.down:
 //        return Offset.fromDirection(getRadiansFromDegree(90), 90);
-        return new Offset(calcLeftMostXtoTarget(), _targetCenter.dy);
+        return new Offset(
+            calcLeftMostXtoTarget() -
+                (childSize.width/2),
+            _targetCenter.dy);
 
       case TooltipDirection.up:
         var top = _top ?? _targetCenter.dy - childSize.height;
