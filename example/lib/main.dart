@@ -23,6 +23,7 @@ class MyHomePage extends StatefulWidget {
   MyHomePage({
     Key key,
   }) : super(key: key);
+
   @override
   _MyHomePageState createState() => new _MyHomePageState();
 }
@@ -30,9 +31,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
+    print(
+        'Device screen size, width = ${MediaQuery.of(context).size.width}, height = ${MediaQuery.of(context).size.height}');
     return new Scaffold(
-      backgroundColor: Colors.red,
-      body: new Center(child: TargetWidget()),
+      backgroundColor: Colors.white,
+      body: Container(
+        constraints: BoxConstraints.expand(),
+        margin: EdgeInsets.only(left: 100),
+        child: new Center(child: TargetWidget()),
+      ),
     );
   }
 }
@@ -64,36 +71,35 @@ class _TargetWidgetState extends State<TargetWidget> {
     }
 
     var renderBox = context.findRenderObject() as RenderBox;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
 
     var targetGlobalCenter = renderBox
         .localToGlobal(renderBox.size.center(Offset.zero), ancestor: overlay);
 
     // We create the tooltip on the first use
     tooltip = SuperTooltip(
-      popupDirection: TooltipDirection.left,
-      arrowTipDistance: 15.0,
-      arrowBaseWidth: 40.0,
-      arrowLength: 40.0,
-      borderColor: Colors.green,
-      borderWidth: 5.0,
-      snapsFarAwayVertically: true,
-      showCloseButton: ShowCloseButton.inside,
+      popupDirection: TooltipDirection.down,
+      arrowTipDistance: 15,
+      arrowBaseWidth: 12,
+      arrowLength: 8,
+      borderColor: Colors.transparent,
+      borderWidth: 5,
+      backgroundColor: Color(0xFF2F6BFF),
+      outsideBackgroundColor: Colors.transparent,
       hasShadow: false,
-      touchThrougArea: new Rect.fromLTWH(targetGlobalCenter.dx - 100,
-          targetGlobalCenter.dy - 100, 200.0, 160.0),
-      touchThroughAreaShape: ClipAreaShape.rectangle,
+      tooltipFixedPosition: TooltipFixedPosition.last,
+//      snapsFarAwayVertically: true,
+//      showCloseButton: ShowCloseButton.inside,
+//      hasShadow: false,
+//      touchThrougArea: new Rect.fromLTWH(targetGlobalCenter.dx - 100,
+//          targetGlobalCenter.dy - 100, 200.0, 160.0),
+//      touchThroughAreaShape: ClipAreaShape.rectangle,
       content: new Material(
-          child: Padding(
-        padding: const EdgeInsets.only(top: 20.0),
-        child: Text(
-          "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, "
-          "sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, "
-          "sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
-          softWrap: true,
-        ),
-      )),
+          color: Colors.transparent,
+          child: Text(
+            "Lorem ipsumkfhkljafhljskdfhsjlkfh ajksdhaskljdhasljkdhasdkljashdjklasdhajkldhasljkdhasjkldhajkdlahslk",
+            softWrap: true,
+          )),
     );
 
     tooltip.show(context);

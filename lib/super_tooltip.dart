@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 enum TooltipDirection { up, down, left, right }
 enum ShowCloseButton { inside, outside, none }
 enum ClipAreaShape { oval, rectangle }
+enum TooltipFixedPosition { first, middle, last }
 
 typedef OutSideTapHandler = void Function();
 
@@ -133,45 +134,48 @@ class SuperTooltip {
   /// Let's you pass a key to the Tooltips cotainer for UI Testing
   final Key tooltipContainerKey;
 
+  final TooltipFixedPosition tooltipFixedPosition;
+
   Offset _targetCenter;
   OverlayEntry _backGroundOverlay;
   OverlayEntry _ballonOverlay;
 
-  SuperTooltip({
-    this.tooltipContainerKey,
-    @required this.content, // The contents of the tooltip.
-    @required this.popupDirection,
-    this.onClose,
-    this.minWidth,
-    this.minHeight,
-    this.maxWidth,
-    this.maxHeight,
-    this.top,
-    this.right,
-    this.bottom,
-    this.left,
-    this.minimumOutSidePadding = 20.0,
-    this.showCloseButton = ShowCloseButton.none,
-    this.snapsFarAwayVertically = false,
-    this.snapsFarAwayHorizontally = false,
-    this.hasShadow = true,
-    this.shadowColor = Colors.black54,
-    this.shadowBlurRadius = 10.0,
-    this.shadowSpreadRadius = 5.0,
-    this.borderWidth = 2.0,
-    this.borderRadius = 10.0,
-    this.borderColor = Colors.black,
-    this.closeButtonColor = Colors.black,
-    this.closeButtonSize = 30.0,
-    this.arrowLength = 20.0,
-    this.arrowBaseWidth = 20.0,
-    this.arrowTipDistance = 2.0,
-    this.backgroundColor = Colors.white,
-    this.outsideBackgroundColor = const Color.fromARGB(50, 255, 255, 255),
-    this.touchThroughAreaShape = ClipAreaShape.oval,
-    this.touchThroughAreaCornerRadius = 5.0,
-    this.touchThrougArea,
-  })  : assert(popupDirection != null),
+  SuperTooltip(
+      {this.tooltipContainerKey,
+      @required this.content, // The contents of the tooltip.
+      @required this.popupDirection,
+      this.onClose,
+      this.minWidth,
+      this.minHeight,
+      this.maxWidth,
+      this.maxHeight,
+      this.top,
+      this.right,
+      this.bottom,
+      this.left,
+      this.minimumOutSidePadding = 20.0,
+      this.showCloseButton = ShowCloseButton.none,
+      this.snapsFarAwayVertically = false,
+      this.snapsFarAwayHorizontally = false,
+      this.hasShadow = true,
+      this.shadowColor = Colors.black54,
+      this.shadowBlurRadius = 10.0,
+      this.shadowSpreadRadius = 5.0,
+      this.borderWidth = 2.0,
+      this.borderRadius = 10.0,
+      this.borderColor = Colors.black,
+      this.closeButtonColor = Colors.black,
+      this.closeButtonSize = 30.0,
+      this.arrowLength = 20.0,
+      this.arrowBaseWidth = 20.0,
+      this.arrowTipDistance = 2.0,
+      this.backgroundColor = Colors.white,
+      this.outsideBackgroundColor = const Color.fromARGB(50, 255, 255, 255),
+      this.touchThroughAreaShape = ClipAreaShape.oval,
+      this.touchThroughAreaCornerRadius = 5.0,
+      this.touchThrougArea,
+      this.tooltipFixedPosition})
+      : assert(popupDirection != null),
         assert(content != null),
         assert((maxWidth ?? double.infinity) >= (minWidth ?? 0.0)),
         assert((maxHeight ?? double.infinity) >= (minHeight ?? 0.0));
@@ -250,7 +254,7 @@ class SuperTooltip {
         builder: (context) => _AnimationWrapper(
               builder: (context, opacity) => AnimatedOpacity(
                 duration: Duration(
-                  milliseconds: 300,
+                  milliseconds: 150,
                 ),
                 opacity: opacity,
                 child: Center(
@@ -258,11 +262,13 @@ class SuperTooltip {
                         delegate: _PopupBallonLayoutDelegate(
                           popupDirection: popupDirection,
                           targetCenter: _targetCenter,
+                          tooltipFixedPosition: tooltipFixedPosition,
                           minWidth: minWidth,
                           maxWidth: maxWidth,
                           minHeight: minHeight,
                           maxHeight: maxHeight,
                           outSidePadding: minimumOutSidePadding,
+                          arrowBaseWidth: arrowBaseWidth,
                           top: top,
                           bottom: bottom,
                           left: left,
@@ -428,20 +434,24 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
   final double _left;
   final double _right;
   final double _outSidePadding;
+  final double _arrowBaseWidth;
+  final TooltipFixedPosition _tooltipFixedPosition;
 
-  _PopupBallonLayoutDelegate({
-    TooltipDirection popupDirection,
-    Offset targetCenter,
-    double minWidth,
-    double maxWidth,
-    double minHeight,
-    double maxHeight,
-    double outSidePadding,
-    double top,
-    double bottom,
-    double left,
-    double right,
-  })  : _targetCenter = targetCenter,
+  _PopupBallonLayoutDelegate(
+      {TooltipDirection popupDirection,
+      Offset targetCenter,
+      double minWidth,
+      double maxWidth,
+      double minHeight,
+      double maxHeight,
+      double outSidePadding,
+      double top,
+      double bottom,
+      double left,
+      double right,
+      double arrowBaseWidth,
+      TooltipFixedPosition tooltipFixedPosition})
+      : _targetCenter = targetCenter,
         _popupDirection = popupDirection,
         _minWidth = minWidth,
         _maxWidth = maxWidth,
@@ -451,11 +461,15 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
         _bottom = bottom,
         _left = left,
         _right = right,
-        _outSidePadding = outSidePadding;
+        _outSidePadding = outSidePadding,
+        _arrowBaseWidth = arrowBaseWidth,
+        _tooltipFixedPosition = tooltipFixedPosition;
 
   @override
   Offset getPositionForChild(Size size, Size childSize) {
     double calcLeftMostXtoTarget() {
+      print('TARGETTTTT ${_targetCenter.dx}');
+      print('CHILD SIZE ${childSize.width}');
       double leftMostXtoTarget;
       if (_left != null) {
         leftMostXtoTarget = _left;
@@ -501,9 +515,11 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       return topmostYtoTarget;
     }
 
+    print('calcLeftMostXtoTarget() ${calcLeftMostXtoTarget()}');
     switch (_popupDirection) {
       //
       case TooltipDirection.down:
+//        return Offset.fromDirection(getRadiansFromDegree(90), 90);
         return new Offset(calcLeftMostXtoTarget(), _targetCenter.dy);
 
       case TooltipDirection.up:
@@ -519,16 +535,18 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
           _targetCenter.dx,
           calcTopMostYtoTarget(),
         );
-
       default:
         throw AssertionError(_popupDirection);
     }
   }
 
+  double getRadiansFromDegree(double degree) {
+    double unitRadian = 57.295779513;
+    return degree / unitRadian;
+  }
+
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
-    // print("ParentConstraints: $constraints");
-
     var calcMinWidth = _minWidth ?? 0.0;
     var calcMaxWidth = _maxWidth ?? double.infinity;
     var calcMinHeight = _minHeight ?? 0.0;
@@ -568,6 +586,20 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       }
     }
 
+    void reCalcWidthBasedOnFixedTooltipPos() {
+      switch (_tooltipFixedPosition) {
+        case TooltipFixedPosition.first:
+          break;
+        case TooltipFixedPosition.middle:
+          break;
+        case TooltipFixedPosition.last:
+          final offsetToSubstract =
+              constraints.maxWidth - _targetCenter.dx + _arrowBaseWidth / 2;
+          calcMaxWidth -= offsetToSubstract;
+          break;
+      }
+    }
+
     switch (_popupDirection) {
       //
       case TooltipDirection.down:
@@ -580,11 +612,11 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
                   constraints.maxHeight - _targetCenter.dy) -
               _outSidePadding;
         }
+        if (_tooltipFixedPosition != null) {}
+        reCalcWidthBasedOnFixedTooltipPos();
         break;
-
       case TooltipDirection.up:
         calcMinMaxWidth();
-
         if (_top != null) {
           calcMinHeight = calcMaxHeight = _targetCenter.dy - _top;
         } else {
@@ -621,6 +653,8 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
         throw AssertionError(_popupDirection);
     }
 
+    print('MIN WIDTH $calcMinWidth');
+    print('MAX WIDTH $calcMaxWidth');
     var childConstraints = new BoxConstraints(
         minWidth: calcMinWidth > calcMaxWidth ? calcMaxWidth : calcMinWidth,
         maxWidth: calcMaxWidth,
@@ -986,12 +1020,20 @@ class _AnimationWrapper extends StatefulWidget {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class _AnimationWrapperState extends State<_AnimationWrapper> {
+class _AnimationWrapperState extends State<_AnimationWrapper>
+    with TickerProviderStateMixin {
   double opacity = 0.0;
+  AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+        duration: const Duration(milliseconds: 150),
+        vsync: this,
+        value: 0.8,
+        lowerBound: 0.8,
+        upperBound: 1.0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -999,10 +1041,12 @@ class _AnimationWrapperState extends State<_AnimationWrapper> {
         });
       }
     });
+    _controller.forward();
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.builder(context, opacity);
+    return ScaleTransition(
+        scale: _controller, child: widget.builder(context, opacity));
   }
 }
