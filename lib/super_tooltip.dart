@@ -137,6 +137,7 @@ class SuperTooltip {
   final TooltipFixedPosition tooltipFixedPosition;
 
   Offset _targetCenter;
+  Size _targetSize;
   OverlayEntry _backGroundOverlay;
   OverlayEntry _ballonOverlay;
 
@@ -202,6 +203,7 @@ class SuperTooltip {
 
     _targetCenter = renderBox.localToGlobal(renderBox.size.center(Offset.zero),
         ancestor: overlay);
+    _targetSize = renderBox.size;
 
     // Create the background below the popup including the clipArea.
     _backGroundOverlay = OverlayEntry(
@@ -262,6 +264,7 @@ class SuperTooltip {
                         delegate: _PopupBallonLayoutDelegate(
                           popupDirection: popupDirection,
                           targetCenter: _targetCenter,
+                          targetSize: _targetSize,
                           tooltipFixedPosition: tooltipFixedPosition,
                           minWidth: minWidth,
                           maxWidth: maxWidth,
@@ -425,6 +428,7 @@ class SuperTooltip {
 class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
   TooltipDirection _popupDirection;
   Offset _targetCenter;
+  Size _targetSize;
   final double _minWidth;
   final double _maxWidth;
   final double _minHeight;
@@ -440,6 +444,7 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
   _PopupBallonLayoutDelegate(
       {TooltipDirection popupDirection,
       Offset targetCenter,
+      Size targetSize,
       double minWidth,
       double maxWidth,
       double minHeight,
@@ -452,6 +457,7 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       double arrowBaseWidth,
       TooltipFixedPosition tooltipFixedPosition})
       : _targetCenter = targetCenter,
+        _targetSize = targetSize,
         _popupDirection = popupDirection,
         _minWidth = minWidth,
         _maxWidth = maxWidth,
@@ -521,8 +527,11 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       case TooltipDirection.down:
 //        return Offset.fromDirection(getRadiansFromDegree(90), 90);
         return new Offset(
-            calcLeftMostXtoTarget() -
-                (childSize.width/2),
+            calcLeftMostXtoTarget() 
+//                - (size.width - _targetCenter.dx - _outSidePadding - 
+//                    _targetSize.width/2 - 12),
+        - (childSize.width / 2 - _targetSize.width/2 - 12)
+            ,
             _targetCenter.dy);
 
       case TooltipDirection.up:
@@ -597,7 +606,8 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
           break;
         case TooltipFixedPosition.last:
           final offsetToSubstract =
-              constraints.maxWidth - _targetCenter.dx + _arrowBaseWidth / 2;
+              constraints.maxWidth - (_targetCenter.dx + _outSidePadding + 
+                  _targetSize.width / 2 + 12);
           calcMaxWidth -= offsetToSubstract;
           break;
       }
