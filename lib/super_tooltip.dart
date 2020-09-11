@@ -530,7 +530,7 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
             calcLeftMostXtoTarget() 
 //                - (size.width - _targetCenter.dx - _outSidePadding - 
 //                    _targetSize.width/2 - 12),
-        - (childSize.width / 2 - _targetSize.width/2 - 12)
+        - (childSize.width / 2 - _targetSize.width / 2 - 6 - _arrowBaseWidth / 2)
             ,
             _targetCenter.dy);
 
@@ -607,7 +607,7 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
         case TooltipFixedPosition.last:
           final offsetToSubstract =
               constraints.maxWidth - (_targetCenter.dx + _outSidePadding + 
-                  _targetSize.width / 2 + 12);
+                  _arrowBaseWidth / 2 + 12);
           calcMaxWidth -= offsetToSubstract;
           break;
       }
@@ -1055,6 +1055,13 @@ class _AnimationWrapperState extends State<_AnimationWrapper>
       }
     });
     _controller.forward();
+  }
+
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override

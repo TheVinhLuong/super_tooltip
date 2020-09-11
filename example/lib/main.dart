@@ -37,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundColor: Colors.white,
       body: Container(
         constraints: BoxConstraints.expand(),
-//        margin: EdgeInsets.only(right: 150),
+        margin: EdgeInsets.only(right: 100),
         child: new Center(child: TargetWidget()),
       ),
     );
@@ -84,7 +84,7 @@ class _TargetWidgetState extends State<TargetWidget> {
       arrowLength: 8,
       borderColor: Colors.transparent,
       borderWidth: 5,
-minimumOutSidePadding: 30,
+//minimumOutSidePadding: 30,
 //      left: 0,
       backgroundColor: Color(0xFF2F6BFF),
       outsideBackgroundColor: Colors.transparent,
