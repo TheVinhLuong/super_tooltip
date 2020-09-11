@@ -37,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundColor: Colors.white,
       body: Container(
         constraints: BoxConstraints.expand(),
-        margin: EdgeInsets.only(left: 120,top: 400),
+        margin: EdgeInsets.only(left: 120,top: 500),
         child: new Center(child: TargetWidget()),
       ),
     );

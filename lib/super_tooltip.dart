@@ -207,7 +207,7 @@ class SuperTooltip {
     // Create the background below the popup including the clipArea.
     _backGroundOverlay = OverlayEntry(
         builder: (context) => _AnimationWrapper(
-              builder: (context, opacity) => AnimatedOpacity(
+              builder: (context, opacity, scale) => AnimatedOpacity(
                 opacity: opacity,
                 duration: const Duration(milliseconds: 600),
                 child: GestureDetector(
@@ -253,7 +253,7 @@ class SuperTooltip {
 
     _ballonOverlay = OverlayEntry(
         builder: (context) => _AnimationWrapper(
-              builder: (context, opacity) => AnimatedOpacity(
+              builder: (context, opacity, scale) => AnimatedOpacity(
                 duration: Duration(
                   milliseconds: 150,
                 ),
@@ -280,7 +280,10 @@ class SuperTooltip {
                         ),
                         child: Stack(
                           fit: StackFit.passthrough,
-                          children: [_buildPopUp(), _buildCloseButton()],
+                          children: [
+                            _buildPopUp(scale),
+                            _buildCloseButton()
+                          ],
                         ))),
               ),
             ));
@@ -289,34 +292,37 @@ class SuperTooltip {
     isOpen = true;
   }
 
-  Widget _buildPopUp() {
+  Widget _buildPopUp(Animation<double> scale) {
     return Positioned(
-      child: Container(
-        key: tooltipContainerKey,
-        decoration: ShapeDecoration(
-            color: backgroundColor,
-            shadows: hasShadow
-                ? [
-                    BoxShadow(
-                        color: shadowColor,
-                        blurRadius: shadowBlurRadius,
-                        spreadRadius: shadowSpreadRadius)
-                  ]
-                : null,
-            shape: _BubbleShape(
-                popupDirection,
-                _targetCenter,
-                borderRadius,
-                arrowBaseWidth,
-                arrowTipDistance,
-                borderColor,
-                borderWidth,
-                left,
-                top,
-                right,
-                bottom)),
-        margin: _getBallonContainerMargin(),
-        child: content,
+      child: ScaleTransition(
+        scale: scale,
+        child: Container(
+          key: tooltipContainerKey,
+          decoration: ShapeDecoration(
+              color: backgroundColor,
+              shadows: hasShadow
+                  ? [
+                      BoxShadow(
+                          color: shadowColor,
+                          blurRadius: shadowBlurRadius,
+                          spreadRadius: shadowSpreadRadius)
+                    ]
+                  : null,
+              shape: _BubbleShape(
+                  popupDirection,
+                  _targetCenter,
+                  borderRadius,
+                  arrowBaseWidth,
+                  arrowTipDistance,
+                  borderColor,
+                  borderWidth,
+                  left,
+                  top,
+                  right,
+                  bottom)),
+          margin: _getBallonContainerMargin(),
+          child: content,
+        ),
       ),
     );
   }
@@ -557,6 +563,33 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       }
     }
 
+//    Offset calcPosForFixedArrowLeftRightTooltip(double dx) {
+//      if (_tooltipFixedPosition == TooltipFixedPosition.first) {
+//        return new Offset(
+//            (size.width -
+//                (size.width - _targetCenter.dx) -
+//                _borderRadius -
+//                _arrowBaseWidth / 2 -
+//                _shortestDistanceBetweenArrowAndRadius),
+//            dy);
+//      } else if (_tooltipFixedPosition == TooltipFixedPosition.last) {
+//        return new Offset(
+//            (size.width -
+//                (size.width - _targetCenter.dx) -
+//                childSize.width +
+//                (_borderRadius +
+//                    _arrowBaseWidth / 2 +
+//                    _shortestDistanceBetweenArrowAndRadius)),
+//            dy);
+//      } else {
+//        return new Offset(
+//            (size.width -
+//                (size.width - _targetCenter.dx) -
+//                childSize.width / 2),
+//            dy);
+//      }
+//    }
+
     switch (_popupDirection) {
       //
       case TooltipDirection.down:
@@ -568,7 +601,13 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
         return calcPosForFixedArrowUpDownTooltip(top);
       case TooltipDirection.left:
         var left = _left ?? _targetCenter.dx - childSize.width;
-        return new Offset(left, calcTopMostYtoTarget());
+        return Offset(
+            left,
+            (size.height -
+                (size.height - _targetCenter.dy) -
+                _borderRadius -
+                _arrowBaseWidth / 2 -
+                _shortestDistanceBetweenArrowAndRadius));
 
       case TooltipDirection.right:
         return new Offset(
@@ -1090,7 +1129,7 @@ class _ShapeOverlay extends ShapeBorder {
   }
 }
 
-typedef FadeBuilder = Widget Function(BuildContext, double);
+typedef FadeBuilder = Widget Function(BuildContext, double, Animation<double>);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1108,17 +1147,13 @@ class _AnimationWrapper extends StatefulWidget {
 class _AnimationWrapperState extends State<_AnimationWrapper>
     with TickerProviderStateMixin {
   double opacity = 0.0;
-  AnimationController _controller;
+  AnimationController scaleAnimController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-        duration: const Duration(milliseconds: 150),
-        vsync: this,
-        value: 0.8,
-        lowerBound: 0.8,
-        upperBound: 1.0);
+    scaleAnimController = AnimationController(
+        duration: const Duration(milliseconds: 150), vsync: this, value: 0.8);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -1126,18 +1161,17 @@ class _AnimationWrapperState extends State<_AnimationWrapper>
         });
       }
     });
-    _controller.forward();
+    scaleAnimController.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    scaleAnimController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-        scale: _controller, child: widget.builder(context, opacity));
+    return widget.builder(context, opacity, scaleAnimController);
   }
 }
