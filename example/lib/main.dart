@@ -37,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundColor: Colors.white,
       body: Container(
         constraints: BoxConstraints.expand(),
-        margin: EdgeInsets.only(right: 100),
+        margin: EdgeInsets.only(left: 120,top: 400),
         child: new Center(child: TargetWidget()),
       ),
     );
@@ -78,18 +78,19 @@ class _TargetWidgetState extends State<TargetWidget> {
 
     // We create the tooltip on the first use
     tooltip = SuperTooltip(
-      popupDirection: TooltipDirection.down,
+      popupDirection: TooltipDirection.left,
       arrowTipDistance: 15,
       arrowBaseWidth: 12,
-      arrowLength: 8,
+      arrowLength: 15,
       borderColor: Colors.transparent,
-      borderWidth: 5,
-//minimumOutSidePadding: 30,
+      borderWidth: 0,
+      borderRadius: 8,
+      minimumOutSidePadding: 10,
 //      left: 0,
       backgroundColor: Color(0xFF2F6BFF),
       outsideBackgroundColor: Colors.transparent,
       hasShadow: false,
-      tooltipFixedPosition: TooltipFixedPosition.last,
+      tooltipFixedPosition: TooltipFixedPosition.first,
 //      snapsFarAwayVertically: true,
 //      showCloseButton: ShowCloseButton.inside,
 //      hasShadow: false,
@@ -99,7 +100,7 @@ class _TargetWidgetState extends State<TargetWidget> {
       content: new Material(
           color: Colors.transparent,
           child: Text(
-            "Lorem ipsumkfhkljafhljskdfhsjlkfh ajksdhaskljdhasljkdhasdkljashdjklasdhajkldhasljkdhasjkldhajkdlahslk",
+            "Lorem ipsumkfhkljafhljskdfhsjlkfh ajksdhaskljdhasljkdhasdkljashdjklasdhajkldhasljkdhasjkldhajkdlahslkajksdhaskljdhasljkdhasdkljashdjklasdhajkldhasljkdhasjkldhajkdlahslkajksdhaskljdhasljkdhasdkljashdjklasdhajkldhasljkdhasjkldhajkdlahslkajksdhaskljdhasljkdhasdkljashdjklasdhajkldhasljkdhasjkldhajkdlahslk",
             softWrap: true,
           )),
     );
@@ -119,7 +120,8 @@ class _TargetWidgetState extends State<TargetWidget> {
             decoration: new BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.blue,
-            )),
+            )
+        ),
       ),
     );
   }

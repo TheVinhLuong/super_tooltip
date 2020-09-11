@@ -136,8 +136,9 @@ class SuperTooltip {
 
   final TooltipFixedPosition tooltipFixedPosition;
 
+  final double shortestDistanceBetweenArrowAndRadius = 4;
+
   Offset _targetCenter;
-  Size _targetSize;
   OverlayEntry _backGroundOverlay;
   OverlayEntry _ballonOverlay;
 
@@ -203,8 +204,6 @@ class SuperTooltip {
 
     _targetCenter = renderBox.localToGlobal(renderBox.size.center(Offset.zero),
         ancestor: overlay);
-    _targetSize = renderBox.size;
-
     // Create the background below the popup including the clipArea.
     _backGroundOverlay = OverlayEntry(
         builder: (context) => _AnimationWrapper(
@@ -264,7 +263,9 @@ class SuperTooltip {
                         delegate: _PopupBallonLayoutDelegate(
                           popupDirection: popupDirection,
                           targetCenter: _targetCenter,
-                          targetSize: _targetSize,
+                          borderRadius: borderRadius,
+                          shortestDistanceBetweenArrowAndRadius:
+                              shortestDistanceBetweenArrowAndRadius,
                           tooltipFixedPosition: tooltipFixedPosition,
                           minWidth: minWidth,
                           maxWidth: maxWidth,
@@ -428,7 +429,6 @@ class SuperTooltip {
 class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
   TooltipDirection _popupDirection;
   Offset _targetCenter;
-  Size _targetSize;
   final double _minWidth;
   final double _maxWidth;
   final double _minHeight;
@@ -439,6 +439,9 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
   final double _right;
   final double _outSidePadding;
   final double _arrowBaseWidth;
+  final double _arrowBaseHeight;
+  final double _shortestDistanceBetweenArrowAndRadius;
+  final double _borderRadius;
   final TooltipFixedPosition _tooltipFixedPosition;
 
   _PopupBallonLayoutDelegate(
@@ -455,9 +458,11 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       double left,
       double right,
       double arrowBaseWidth,
+      double shortestDistanceBetweenArrowAndRadius,
+      double borderRadius,
+      double arrowBaseHeight,
       TooltipFixedPosition tooltipFixedPosition})
       : _targetCenter = targetCenter,
-        _targetSize = targetSize,
         _popupDirection = popupDirection,
         _minWidth = minWidth,
         _maxWidth = maxWidth,
@@ -469,6 +474,10 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
         _right = right,
         _outSidePadding = outSidePadding,
         _arrowBaseWidth = arrowBaseWidth,
+        _shortestDistanceBetweenArrowAndRadius =
+            shortestDistanceBetweenArrowAndRadius,
+        _borderRadius = borderRadius,
+        _arrowBaseHeight = arrowBaseHeight,
         _tooltipFixedPosition = tooltipFixedPosition;
 
   @override
@@ -521,23 +530,42 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       return topmostYtoTarget;
     }
 
-    print('calcLeftMostXtoTarget() ${calcLeftMostXtoTarget()}');
+    Offset calcPosForFixedArrowUpDownTooltip(double dy) {
+      if (_tooltipFixedPosition == TooltipFixedPosition.first) {
+        return new Offset(
+            (size.width -
+                (size.width - _targetCenter.dx) -
+                _borderRadius -
+                _arrowBaseWidth / 2 -
+                _shortestDistanceBetweenArrowAndRadius),
+            dy);
+      } else if (_tooltipFixedPosition == TooltipFixedPosition.last) {
+        return new Offset(
+            (size.width -
+                (size.width - _targetCenter.dx) -
+                childSize.width +
+                (_borderRadius +
+                    _arrowBaseWidth / 2 +
+                    _shortestDistanceBetweenArrowAndRadius)),
+            dy);
+      } else {
+        return new Offset(
+            (size.width -
+                (size.width - _targetCenter.dx) -
+                childSize.width / 2),
+            dy);
+      }
+    }
+
     switch (_popupDirection) {
       //
       case TooltipDirection.down:
-//        return Offset.fromDirection(getRadiansFromDegree(90), 90);
-        return new Offset(
-            calcLeftMostXtoTarget() 
-//                - (size.width - _targetCenter.dx - _outSidePadding - 
-//                    _targetSize.width/2 - 12),
-        - (childSize.width / 2 - _targetSize.width / 2 - 6 - _arrowBaseWidth / 2)
-            ,
-            _targetCenter.dy);
-
+        print("SIZEEEE ${size.width} targetCenter ${_targetCenter.dx}");
+        return calcPosForFixedArrowUpDownTooltip(_targetCenter.dy);
       case TooltipDirection.up:
         var top = _top ?? _targetCenter.dy - childSize.height;
-        return new Offset(calcLeftMostXtoTarget(), top);
-
+        print("SIZEEEE ${size.width} targetCenter ${_targetCenter.dx}");
+        return calcPosForFixedArrowUpDownTooltip(top);
       case TooltipDirection.left:
         var left = _left ?? _targetCenter.dx - childSize.width;
         return new Offset(left, calcTopMostYtoTarget());
@@ -550,11 +578,6 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       default:
         throw AssertionError(_popupDirection);
     }
-  }
-
-  double getRadiansFromDegree(double degree) {
-    double unitRadian = 57.295779513;
-    return degree / unitRadian;
   }
 
   @override
@@ -598,23 +621,69 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
       }
     }
 
-    void reCalcWidthBasedOnFixedTooltipPos() {
+    void reCalcWidthBasedOnUpDownFixedTooltipPos() {
       switch (_tooltipFixedPosition) {
         case TooltipFixedPosition.first:
+          final offsetToSubstract = constraints.maxWidth -
+              (_targetCenter.dx +
+                  _outSidePadding -
+                  _arrowBaseWidth / 2 -
+                  _borderRadius -
+                  _shortestDistanceBetweenArrowAndRadius);
+          calcMaxWidth = offsetToSubstract;
           break;
         case TooltipFixedPosition.middle:
+          final childHalfWidth =
+              _targetCenter.dx > constraints.maxWidth - _targetCenter.dx
+                  ? constraints.maxWidth - _targetCenter.dx
+                  : _targetCenter.dx;
+          final offsetToSubstract = childHalfWidth - _outSidePadding;
+          calcMaxWidth = offsetToSubstract * 2;
           break;
         case TooltipFixedPosition.last:
-          final offsetToSubstract =
-              constraints.maxWidth - (_targetCenter.dx + _outSidePadding + 
-                  _arrowBaseWidth / 2 + 12);
-          calcMaxWidth -= offsetToSubstract;
+          final offsetToSubstract = constraints.maxWidth -
+              ((constraints.maxWidth - _targetCenter.dx) +
+                  _outSidePadding -
+                  _arrowBaseWidth / 2 -
+                  _borderRadius -
+                  _shortestDistanceBetweenArrowAndRadius);
+          calcMaxWidth = offsetToSubstract;
+          break;
+      }
+    }
+
+    void reCalcHeightBasedOnLeftRightFixedTooltipPos() {
+      switch (_tooltipFixedPosition) {
+        case TooltipFixedPosition.first:
+          final offsetToSubstract = constraints.maxHeight -
+              (_targetCenter.dy +
+                  _outSidePadding -
+                  _arrowBaseWidth / 2 -
+                  _borderRadius -
+                  _shortestDistanceBetweenArrowAndRadius);
+          calcMaxHeight = offsetToSubstract;
+          break;
+        case TooltipFixedPosition.middle:
+          final childHalfWidth =
+              _targetCenter.dy > constraints.maxHeight - _targetCenter.dy
+                  ? constraints.maxHeight - _targetCenter.dy
+                  : _targetCenter.dy;
+          final offsetToSubstract = childHalfWidth - _outSidePadding;
+          calcMaxHeight = offsetToSubstract * 2;
+          break;
+        case TooltipFixedPosition.last:
+          final offsetToSubstract = constraints.maxWidth -
+              ((constraints.maxWidth - _targetCenter.dx) +
+                  _outSidePadding -
+                  _arrowBaseWidth / 2 -
+                  _borderRadius -
+                  _shortestDistanceBetweenArrowAndRadius);
+          calcMaxHeight = offsetToSubstract;
           break;
       }
     }
 
     switch (_popupDirection) {
-      //
       case TooltipDirection.down:
         calcMinMaxWidth();
         if (_bottom != null) {
@@ -626,7 +695,7 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
               _outSidePadding;
         }
         if (_tooltipFixedPosition != null) {}
-        reCalcWidthBasedOnFixedTooltipPos();
+        reCalcWidthBasedOnUpDownFixedTooltipPos();
         break;
       case TooltipDirection.up:
         calcMinMaxWidth();
@@ -637,10 +706,12 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
               min((_maxHeight ?? constraints.maxHeight), _targetCenter.dy) -
                   _outSidePadding;
         }
+        reCalcWidthBasedOnUpDownFixedTooltipPos();
         break;
 
       case TooltipDirection.right:
         calcMinMaxHeight();
+        reCalcHeightBasedOnLeftRightFixedTooltipPos();
         if (_right != null) {
           calcMinWidth =
               calcMaxWidth = constraints.maxWidth - _right - _targetCenter.dx;
@@ -653,6 +724,7 @@ class _PopupBallonLayoutDelegate extends SingleChildLayoutDelegate {
 
       case TooltipDirection.left:
         calcMinMaxHeight();
+        reCalcHeightBasedOnLeftRightFixedTooltipPos();
         if (_left != null) {
           calcMinWidth = calcMaxWidth = _targetCenter.dx - _left;
         } else {
@@ -1056,7 +1128,6 @@ class _AnimationWrapperState extends State<_AnimationWrapper>
     });
     _controller.forward();
   }
-
 
   @override
   void dispose() {
